@@ -158,3 +158,6 @@ dot.env
 
 # Custom
 /etc/database/*
+/bot/db
+*.input
+/parser/data/*.txt

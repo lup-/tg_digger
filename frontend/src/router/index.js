@@ -1,18 +1,24 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import CvList from '../components/Cv/List';
-import CvEdit from '../components/Cv/Edit';
-import CvShow from '../components/Cv/Show';
-import Home from '../components/Home';
+
+import Home from "../components/Home";
+import Login from '../components/Users/Login';
+import CvsView from '../components/Cvs/View';
+import CvsList from '../components/Cvs/List';
+import VacanciesView from '../components/Vacancies/View';
+import VacanciesList from '../components/Vacancies/List';
+
+import store from "../store";
 
 Vue.use(VueRouter);
 
 const routes = [
-    { path: '/:slug', name: 'Show', component: CvShow },
-    { path: '/', name: 'Home', component: Home },
-    { path: '/cv/list', name: 'List', component: CvList },
-    { path: '/cv/edit/:id', name: 'Edit', component: CvEdit },
-    { path: '/cv/new', name: 'New', component: CvEdit },
+    { name: 'home', path: '/', component: Home, meta: {requiresAuth: true, group: 'home'} },
+    { name: 'login', path: '/login', component: Login },
+    { name: 'cvsList', path: '/cvs/', component: CvsList, meta: {requiresAuth: true, group: 'cvsList'} },
+    { name: 'cvView', path: '/cvs/:id', component: CvsView, meta: {requiresAuth: true, group: 'cvsList'} },
+    { name: 'vacanciesList', path: '/vacancies/', component: VacanciesList, meta: {requiresAuth: true, group: 'vacanciesList'} },
+    { name: 'vacancyView', path: '/vacancies/:id', component: VacanciesView, meta: {requiresAuth: true, group: 'vacanciesList'} },
 ]
 
 const router = new VueRouter({
@@ -21,4 +27,33 @@ const router = new VueRouter({
     routes
 });
 
-export default router;
+router.beforeEach(async (to, from, next) => {
+    if (to.matched.some(record => record.meta.requiresAuth)) {
+        await store.dispatch('loginLocalUser');
+        let isNotLoggedIn = !store.getters.isLoggedIn;
+        let loginTo = {
+            path: '/login',
+            query: { redirect: to.fullPath }
+        };
+
+        if (isNotLoggedIn) {
+            next(loginTo);
+        }
+        else {
+            let routeGroup = to.matched && to.matched[0] ? to.matched[0].meta.group : false;
+
+            if (routeGroup && store.getters.userHasRights(routeGroup)) {
+                next();
+            }
+            else {
+                store.commit('setErrorMessage', 'Не достаточно прав!');
+                next(loginTo);
+            }
+        }
+    }
+    else {
+        next();
+    }
+})
+
+export {router, store};

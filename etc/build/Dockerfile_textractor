@@ -1,0 +1,4 @@
+FROM python:3.8
+COPY ./textractor /var/www
+WORKDIR /var/www
+RUN CFLAGS="-Wno-narrowing" pip install -r requirements.txt

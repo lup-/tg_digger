@@ -8,9 +8,19 @@ const ITEMS_NAME = 'cvs';
 
 module.exports = {
     async list(ctx) {
-        let filter = ctx.request.body && ctx.request.body.filter
+        let inputFilter = ctx.request.body && ctx.request.body.filter
             ? ctx.request.body.filter || {}
             : {};
+        let limit = ctx.request.body.limit ? parseInt(ctx.request.body.limit) : 50;
+
+        let filter = {};
+        if (inputFilter.cities && inputFilter.cities.length > 0) {
+            filter.city = {$in: inputFilter.cities};
+        }
+
+        if (inputFilter.keywords && inputFilter.keywords.length > 0) {
+            filter.keywords = {$in: inputFilter.keywords};
+        }
 
         let defaultFilter = {
             'deleted': {$in: [null, false]}
@@ -19,7 +29,7 @@ module.exports = {
         filter = Object.assign(defaultFilter, filter);
 
         let db = await getDb();
-        let items = await db.collection(COLLECTION_NAME).find(filter).toArray();
+        let items = await db.collection(COLLECTION_NAME).find(filter).limit(limit).toArray();
         let response = {};
         response[ITEMS_NAME] = items;
 
@@ -82,5 +92,31 @@ module.exports = {
         response[ITEM_NAME] = item;
 
         ctx.body = response;
+    },
+    async keywords(ctx) {
+        let db = await getDb();
+        let query = ctx.request.body.query || '';
+        let limit = ctx.request.body.limit ? parseInt(ctx.request.body.limit) : 50;
+
+        let result = await db.collection(COLLECTION_NAME).aggregate([
+            { $unwind: '$keywords' },
+            { $project: {keywords: 1} },
+            { $match: {keywords: {'$regex': `.*?${query}.*`, '$options': 'i' }} },
+            { $group: {"_id": null, keywords: {$addToSet: "$keywords"}} }
+        ]).toArray();
+
+        ctx.body = {keywords: result && result[0] ? result[0].keywords.slice(0, limit) : []};
+    },
+    async cities(ctx) {
+        let db = await getDb();
+        let query = ctx.request.body.query || '';
+        let limit = ctx.request.body.limit ? parseInt(ctx.request.body.limit) : 50;
+
+        let result = await db.collection(COLLECTION_NAME).aggregate([
+            { $match: {city: {'$regex': `.*?${query}.*`, '$options': 'i' }} },
+            { $group: {"_id": null, cities: {$addToSet: "$city"}} }
+        ]).toArray();
+
+        ctx.body = {cities: result && result[0] ? result[0].cities.slice(0, limit) : []};
     }
 }

@@ -1,8 +1,9 @@
 import Vue from 'vue'
 import App from './App.vue'
 import vuetify from './plugins/vuetify';
-import store from './store'
-import router from './router'
+import {router, store} from './router'
+import VueTrix from "vue-trix";
+import {Network} from "vue-visjs";
 
 Vue.config.productionTip = false
 
@@ -14,6 +15,8 @@ Vue.config.errorHandler = function (err) {
   c.error(err);
 };
 
+Vue.use(VueTrix);
+Vue.use('network', Network);
 
 let vueInstance = new Vue({
   vuetify,

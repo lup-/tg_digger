@@ -1,7 +1,7 @@
 version: "3"
 
 services:
-  nginx:
+  admin:
     image: nginx
     ports:
       - ${HTTP_PORT}:80
@@ -13,8 +13,6 @@ services:
 
   backend:
     image: node
-    ports:
-      - 3000:3000
     depends_on:
       - mongo
     volumes:
@@ -22,13 +20,47 @@ services:
     working_dir: /var/www
     environment:
       - NODE_ENV=development
-      - MONGO_HOST=cv_mongo
-      - MONGO_DB=cv
+      - MONGO_HOST=mongo
+      - MONGO_DB=digger
     command: npm run start
+
+  digger:
+    build:
+      context: "."
+      dockerfile: "./etc/build/Dockerfile_tdlib"
+    ports:
+      - ${BOT_DEBUG_PORT}:9229
+      - ${BOT_HTTP_PORT}:3000
+    depends_on:
+      - mongo
+    volumes:
+      - ./bot:/var/bot
+    working_dir: /var/bot
+    environment:
+      - MONGO_HOST=mongo
+      - MONGO_DB=digger
+      - API_ID=${API_ID}
+      - API_HASH=${API_HASH}
+      - AUTH_PHONE=${AUTH_PHONE}
+      - TDJSONLIB_PATH=${TDJSONLIB_PATH}
+    command: npm run start
+
+  textractor:
+    build:
+      context: "."
+      dockerfile: "./etc/build/Dockerfile_textractor"
+    ports:
+      - ${TEXTRACTOR_PORT}:5000
+    volumes:
+      - ./textractor:/var/www
+    working_dir: /var/www
+    environment:
+      PORT: 5000
+      FLASK_DEBUG: 1
+    command: python server.py
 
   mongo:
     image: mongo
-    container_name: 'cv_mongo'
     volumes:
       - ./etc/database:/data/db
     ports:
