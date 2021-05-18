@@ -17,12 +17,14 @@ services:
       - mongo
     volumes:
       - ./backend:/var/www
+    ports:
+      - ${BACKEND_DEBUG_PORT}:9229
     working_dir: /var/www
     environment:
       - NODE_ENV=development
       - MONGO_HOST=mongo
       - MONGO_DB=digger
-    command: npm run start
+    command: node --inspect=0.0.0.0 server.js
 
   digger:
     build:

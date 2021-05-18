@@ -5,6 +5,7 @@ const bodyParser = require('koa-bodyparser');
 const cvs = require('./routes/cvs');
 const vacancies = require('./routes/vacancies');
 const users = require('./routes/users');
+const skills = require('./routes/skills');
 
 const PORT = 3000;
 const HOST = '0.0.0.0';
@@ -35,6 +36,14 @@ router
     .post('/api/user/delete', users.delete.bind(users))
     .post('/api/user/check', users.check.bind(users))
     .post('/api/user/login', users.login.bind(users));
+
+router
+    .post('/api/skills/listRaw', skills.listRaw.bind(skills))
+    .post('/api/skills/listSkills', skills.listSkills.bind(skills))
+    .post('/api/skills/listGroups', skills.listGroups.bind(skills))
+    .post('/api/skills/update', skills.update.bind(skills))
+    .post('/api/skills/delete', skills.delete.bind(skills))
+    .post('/api/skills/complete', skills.complete.bind(skills));
 
 app
     .use(bodyParser({

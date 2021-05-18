@@ -15,6 +15,7 @@ export default new Vuex.Store({
         routes: [
             {code: 'cvsList', title: 'Резюме', icon: 'mdi-account-hard-hat'},
             {code: 'vacanciesList', title: 'Вакансии', icon: 'mdi-briefcase'},
+            {code: 'skillsList', title: 'Навыки', icon: 'mdi-hammer-screwdriver'},
             //{code: 'usersList', title: 'Пользователи админки', icon: 'mdi-account'},
         ]
     },

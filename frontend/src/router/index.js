@@ -7,6 +7,7 @@ import CvsView from '../components/Cvs/View';
 import CvsList from '../components/Cvs/List';
 import VacanciesView from '../components/Vacancies/View';
 import VacanciesList from '../components/Vacancies/List';
+import SkillList from "@/components/Skills/SkillList";
 
 import store from "../store";
 
@@ -19,6 +20,7 @@ const routes = [
     { name: 'cvView', path: '/cvs/:id', component: CvsView, meta: {requiresAuth: true, group: 'cvsList'} },
     { name: 'vacanciesList', path: '/vacancies/', component: VacanciesList, meta: {requiresAuth: true, group: 'vacanciesList'} },
     { name: 'vacancyView', path: '/vacancies/:id', component: VacanciesView, meta: {requiresAuth: true, group: 'vacanciesList'} },
+    { name: 'skillsList', path: '/skills/', component: SkillList, meta: {requiresAuth: true, group: 'skillsList'} },
 ]
 
 const router = new VueRouter({
