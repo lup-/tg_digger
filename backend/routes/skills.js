@@ -13,6 +13,9 @@ module.exports = {
             : {};
         let limit = ctx.request.body.limit ? parseInt(ctx.request.body.limit) : 50;
         let offset = ctx.request.body.offset ? parseInt(ctx.request.body.offset) : 0;
+        if (limit === -1) {
+            limit = 50;
+        }
 
         let defaultFilter = {
             'completed': {$in: [null, false]},
@@ -48,7 +51,7 @@ module.exports = {
             { $replaceRoot: {newRoot: "$doc"} },
         ]).toArray();
 
-        let rawSkillsCount = await db.collection(COLLECTION_NAME).countDocuments(filter);
+        let rawSkillsCount = await db.collection(COLLECTION_NAME).estimatedDocumentCount(filter);
 
         ctx.body = {
             rawSkills: items,

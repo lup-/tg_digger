@@ -2,6 +2,16 @@
     <v-container class="fill-height align-start">
         <v-row align="start" justify="start">
             <v-col cols="12">
+                <v-text-field
+                        v-model="search"
+                        solo
+                        clearable
+                        label="Поиск"
+                        append-outer-icon="mdi-magnify"
+                        @click:append-outer="getDataFromApi"
+                ></v-text-field>
+            </v-col>
+            <v-col cols="12">
                 <v-data-table
                         dense
                         :headers="headers"
@@ -47,6 +57,7 @@
 
 <script>
     import axios from "axios";
+    import debounce from "lodash.debounce";
     import SkillChip from "@/components/Skills/SkillChip";
     import SkillDetectionDialog from "@/components/Skills/SkillDetectionDialog";
 
@@ -67,10 +78,12 @@
                 unsaved: false,
                 options: {},
 
+                search: '',
+
                 headers: [
-                    {text: 'Исходная запись', value: 'src'},
-                    {text: 'Навыки', value: 'skills'},
-                    {text: 'Действия', value: 'actions', sortable: false},
+                    {text: 'Исходная запись', value: 'src', width: '40%'},
+                    {text: 'Навыки', value: 'skills', width: '40%'},
+                    {text: 'Действия', value: 'actions', sortable: false, width: '20%'},
                 ],
             }
         },
@@ -81,6 +94,9 @@
                 },
                 deep: true,
             },
+            search() {
+                this.getDataFromApi();
+            }
         },
         mounted () {
             this.getDataFromApi();
@@ -90,7 +106,7 @@
                 this.unsaved = newUnsaved;
             },
 
-            async getDataFromApi() {
+            getDataFromApi: debounce(async function() {
                 if (this.loading) {
                     return;
                 }
@@ -98,8 +114,14 @@
                 this.loading = true;
                 const { page, itemsPerPage } = this.options;
                 //sortBy, sortDesc,
+
+                let filter = {};
+                if (this.search) {
+                    filter = { $text: { $search: this.search } };
+                }
+
                 let request = {
-                    filter: {},
+                    filter,
                     limit: itemsPerPage,
                     offset: (page - 1) * itemsPerPage,
                 }
@@ -112,7 +134,7 @@
                 finally {
                     this.loading = false;
                 }
-            },
+            }, 300),
 
             editItem(item) {
                 this.editedIndex = this.items.indexOf(item);
