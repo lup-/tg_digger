@@ -1,9 +1,9 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 
-import cv from "./modules/cvs";
-import vacancy from "./modules/vacancies";
+import scan from "./modules/scan";
 import user from "./modules/user";
+import telegram from "@/store/modules/telegram";
 
 Vue.use(Vuex);
 
@@ -13,16 +13,13 @@ export default new Vuex.Store({
         appMessage: false,
         loading: false,
         routes: [
-            {code: 'cvsList', title: 'Резюме', icon: 'mdi-account-hard-hat'},
-            {code: 'vacanciesList', title: 'Вакансии', icon: 'mdi-briefcase'},
-            {code: 'skillsList', title: 'Навыки', icon: 'mdi-hammer-screwdriver'},
-            //{code: 'usersList', title: 'Пользователи админки', icon: 'mdi-account'},
+            {code: 'scansList', title: 'Сканирования', icon: 'mdi-magnify-scan'},
         ]
     },
     getters: {
         allowedRoutes(state, getters) {
-            return state.routes.filter(route => getters.userHasRights(route.code));
-        }
+            return state.routes.filter(route => getters.userHasRights(route));
+        },
     },
     mutations: {
         setLoading(state, newLoadingState) {
@@ -40,11 +37,14 @@ export default new Vuex.Store({
         setInfoMessage(state, text) {
             state.appMessage = {text, color: 'info'};
         },
+        setWarnMessage(state, text) {
+            state.appMessage = {text, color: 'orange darken-2'};
+        },
     },
     actions: {},
     modules: {
-        cv,
-        vacancy,
-        user
+        scan,
+        user,
+        telegram,
     }
 })

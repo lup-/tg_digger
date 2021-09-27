@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/admin/admin.iml" filepath="$PROJECT_DIR$/admin/admin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/backend/backend.iml" filepath="$PROJECT_DIR$/backend/backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/frontend/frontend.iml" filepath="$PROJECT_DIR$/frontend/frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/telegram/telegram.iml" filepath="$PROJECT_DIR$/telegram/telegram.iml" />
+      <module fileurl="file://$PROJECT_DIR$/textractor/textractor.iml" filepath="$PROJECT_DIR$/textractor/textractor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tg_digger.iml" filepath="$PROJECT_DIR$/tg_digger.iml" />
+    </modules>
+  </component>
+</project>

@@ -1,6 +1,7 @@
 <template>
     <v-container class="fill-height align-center justify-center">
         <v-card>
+            <v-card-title>Вход в Копателя</v-card-title>
             <v-card-text>
                 <v-form ref="form" v-model="valid">
                     <v-text-field
@@ -23,6 +24,12 @@
                 <v-btn :disabled="!valid" color="success" @click="doLogin">
                     Войти
                 </v-btn>
+                <v-spacer></v-spacer>
+                <v-btn
+                        text
+                        x-small
+                        @click="$router.push({name: 'register'})"
+                >Регистрация</v-btn>
             </v-card-actions>
         </v-card>
     </v-container>

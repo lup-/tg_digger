@@ -5,7 +5,11 @@ const bodyParser = require('koa-bodyparser');
 const cvs = require('./routes/cvs');
 const vacancies = require('./routes/vacancies');
 const users = require('./routes/users');
+const adminUsers = require('./routes/adminUsers');
 const skills = require('./routes/skills');
+const telegram = require('./routes/telegram');
+const scan = require('./routes/scan');
+const job = require('./routes/job');
 
 const PORT = 3000;
 const HOST = '0.0.0.0';
@@ -30,12 +34,18 @@ router
     .post('/api/vacancies/cities', vacancies.cities.bind(vacancies));
 
 router
-    .post('/api/user/list', users.list.bind(users))
-    .post('/api/user/add', users.add.bind(users))
     .post('/api/user/update', users.update.bind(users))
-    .post('/api/user/delete', users.delete.bind(users))
     .post('/api/user/check', users.check.bind(users))
-    .post('/api/user/login', users.login.bind(users));
+    .post('/api/user/login', users.login.bind(users))
+    .post('/api/user/register', users.register.bind(users));
+
+router
+    .post('/api/admin/user/list', adminUsers.list.bind(adminUsers))
+    .post('/api/admin/user/add', adminUsers.add.bind(adminUsers))
+    .post('/api/admin/user/update', adminUsers.update.bind(adminUsers))
+    .post('/api/admin/user/delete', adminUsers.delete.bind(adminUsers))
+    .post('/api/admin/user/check', adminUsers.check.bind(adminUsers))
+    .post('/api/admin/user/login', adminUsers.login.bind(adminUsers));
 
 router
     .post('/api/skills/listRaw', skills.listRaw.bind(skills))
@@ -44,6 +54,26 @@ router
     .post('/api/skills/update', skills.update.bind(skills))
     .post('/api/skills/delete', skills.delete.bind(skills))
     .post('/api/skills/complete', skills.complete.bind(skills));
+
+router
+    .post('/api/telegram/connect', telegram.connect.bind(telegram))
+    .post('/api/telegram/disconnect', telegram.disconnect.bind(telegram))
+    .post('/api/telegram/sendCode', telegram.sendCode.bind(telegram))
+    .post('/api/telegram/getMe', telegram.getMe.bind(telegram))
+    .post('/api/telegram/getChats', telegram.getChats.bind(telegram))
+    .post('/api/telegram/getHistory', telegram.getHistory.bind(telegram))
+    .post('/api/telegram/clientStatus', telegram.clientStatus.bind(telegram))
+    .post('/api/telegram/sendMessage', telegram.sendMessage.bind(telegram));
+
+router
+    .post('/api/scan/list', scan.list.bind(scan))
+    .post('/api/scan/details', scan.details.bind(scan))
+    .post('/api/scan/add', scan.add.bind(scan))
+    .post('/api/scan/update', scan.update.bind(scan))
+    .post('/api/scan/delete', scan.delete.bind(scan));
+
+router
+    .post('/api/job/status', job.status.bind(job));
 
 app
     .use(bodyParser({

@@ -20,7 +20,7 @@ module.exports = {
         filter = Object.assign(defaultFilter, filter);
 
         let db = await getDb();
-        let users = await db.collection('adminUsers').find(filter).toArray();
+        let users = await db.collection('users').find(filter).toArray();
         ctx.body = {users};
     },
     async add(ctx) {
@@ -32,8 +32,11 @@ module.exports = {
         userData.passwordHash = md5(userData.password);
         delete userData.password;
 
-        let result = await db.collection('adminUsers').insertOne(userData);
+        let result = await db.collection('users').insertOne(userData);
         let user = result.ops[0];
+        if (user.passwordHash) {
+            delete user.passwordHash;
+        }
 
         ctx.body = { user };
     },
@@ -56,8 +59,11 @@ module.exports = {
             delete userData.password;
         }
 
-        let updateResult = await db.collection('adminUsers').findOneAndReplace({id, deleted: {$in: [null, false]}}, userData, {returnOriginal: false});
+        let updateResult = await db.collection('users').findOneAndReplace({id, deleted: {$in: [null, false]}}, userData, {returnOriginal: false});
         let user = updateResult.value || false;
+        if (user.passwordHash) {
+            delete user.passwordHash;
+        }
 
         ctx.body = { user };
     },
@@ -66,7 +72,7 @@ module.exports = {
         let passwordHash = md5(ctx.request.body.password);
 
         let db = await getDb();
-        let user = await db.collection('adminUsers').findOne({login, passwordHash, deleted: {$in: [null, false]}});
+        let user = await db.collection('users').findOne({login, passwordHash, deleted: {$in: [null, false]}});
         let isLoaded = Boolean(user);
 
         if (isLoaded) {
@@ -82,8 +88,11 @@ module.exports = {
         let id = ctx.request.body.id;
 
         let db = await getDb();
-        let user = await db.collection('adminUsers').findOne({ id, deleted: {$in: [null, false]} });
-        ctx.body = {success: Boolean(user)};
+        let user = await db.collection('users').findOne({ id, deleted: {$in: [null, false]} });
+        if (user && user.passwordHash) {
+            delete user.passwordHash;
+        }
+        ctx.body = {success: Boolean(user), user};
     },
     async delete(ctx) {
         let userData = ctx.request.body.user;
@@ -91,9 +100,51 @@ module.exports = {
 
         let db = await getDb();
         let deleted = moment().unix();
-        let updateResult = await db.collection('adminUsers').findOneAndUpdate({id}, {$set: {deleted}}, {returnOriginal: false});
+        let updateResult = await db.collection('users').findOneAndUpdate({id}, {$set: {deleted}}, {returnOriginal: false});
         let user = updateResult.value || false;
+        if (user.passwordHash) {
+            delete user.passwordHash;
+        }
 
         ctx.body = { user };
+    },
+    async register(ctx) {
+        let login = ctx.request.body.login;
+        let passwordHash = md5(ctx.request.body.password);
+        let fullName = ctx.request.body.name;
+        let [firstName, familyName] = fullName.split(' ');
+
+        let emailHash = md5( login.toLowerCase() );
+        let gravatarUrl = "https://www.gravatar.com/avatar/"+emailHash+".jpg?d=identicon";
+
+        let userData = {
+            id : shortid(),
+            registered: moment().unix(),
+            fullName,
+            firstName,
+            familyName,
+            imageUrl: gravatarUrl,
+            login,
+            passwordHash,
+        };
+
+        let db = await getDb();
+        let existingUser = await db.collection('users').findOne({ login });
+        if (existingUser) {
+            ctx.body = {
+                user: false,
+                error: 'Пользователь с такой электропочтой уже зарегистрирован'
+            };
+        }
+        else {
+            let insertResult = await db.collection('users').insertOne(userData);
+            let userRecord = insertResult.ops[0] || false;
+            delete userRecord.passwordHash;
+
+            ctx.body = {
+                user: userRecord,
+                error: false
+            };
+        }
     }
 }

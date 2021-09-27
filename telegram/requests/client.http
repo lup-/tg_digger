@@ -1,0 +1,55 @@
+POST http://localhost:3000/me
+Content-Type: application/json
+
+{
+  "phone": "79264240454"
+}
+
+###
+POST http://localhost:3000/code
+Content-Type: application/json
+
+{
+  "phone": "79264240454",
+  "code": "66310"
+}
+
+###
+POST http://localhost:3000/newClient
+Content-Type: application/json
+
+{
+  "phone": "79264240454",
+  "password": "---"
+}
+
+###
+
+POST http://localhost:3000/status
+Content-Type: application/json
+
+{
+  "phone": "79264240454"
+}
+
+###
+
+POST http://localhost:3000/getHistory
+Content-Type: application/json
+
+{
+  "phone": "79264240454",
+  "user": "@NatalyaHakhverdyan"
+}
+
+###
+
+POST http://localhost:3000/searchUser
+Content-Type: application/json
+
+{
+  "phone": "79264240454",
+  "query": "79265916440"
+}
+
+###

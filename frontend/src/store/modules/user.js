@@ -16,51 +16,13 @@ export default {
             return state.current && state.current.id;
         },
         userHasRights(state) {
-            return (right) => {
-                return state.current && (
-                    right === 'home' ||
-                    state.current.isAdmin || (
-                        state.current.rights && state.current.rights.indexOf(right) !== -1
-                    )
-                );
+            return () => {
+                return Boolean(state.current);
             }
         }
     },
     actions: {
-        async loadUsers({commit}, filter = {}) {
-            let response = await axios.post(`/api/user/list`, {filter});
-            await commit('setFilter', filter);
-            return commit('setUsers', response.data.users);
-        },
-        async setEditUser({commit, state}, userId) {
-            let user = state.list.find(item => item.id === userId);
-            if (user) {
-                commit('setEditUser', user);
-            }
-        },
-        async newUser({dispatch, state}, user) {
-            let result = await axios.post(`/api/user/add`, {user});
-            dispatch('setEditUser', result.data.user);
-            return dispatch('loadUsers', state.filter);
-        },
-        async editUser({dispatch, commit, state}, user) {
-            try {
-                let response = await axios.post(`/api/user/update`, {user});
-                let isSuccess = response && response.data && response.data.user && response.data.user.id;
-                if (isSuccess) {
-                    commit('setSuccessMessage', 'Данные сохранены!');
-                }
-                else {
-                    commit('setErrorMessage', 'Ошибка сохранения данных!');
-                }
-            }
-            catch (e) {
-                commit('setErrorMessage', 'Ошибка сохранения данных!')
-            }
-
-            return dispatch('loadUsers', state.filter);
-        },
-        async loginLocalUser({commit, state}) {
+        async loginLocalUser({commit, state, dispatch}) {
             if (state.localTried) {
                 return;
             }
@@ -82,7 +44,8 @@ export default {
             let response = await axios.post(`/api/user/check`, {id: user.id});
             let isSuccess = response && response.data && response.data.success === true;
             if (isSuccess) {
-                return commit('setCurrentUser', user);
+                commit('setCurrentUser', response.data.user);
+                dispatch('saveLoggedInUser', response.data.user);
             }
         },
         async saveLoggedInUser(_, user) {
@@ -93,38 +56,48 @@ export default {
             try {
                 let response = await axios.post(`/api/user/login`, {login, password});
                 let isSuccess = response && response.data && response.data.user && response.data.user.id;
-                let user = isSuccess ? response.data.user : false;
                 if (isSuccess) {
+                    let user = response.data.user;
+
                     commit('setCurrentUser', user);
                     dispatch('saveLoggedInUser', user);
-                    commit('setSuccessMessage', 'Вы вошли в систему');
+                    commit('setSuccessMessage', 'Вы вошли в систему', { root: true });
                 }
                 else {
-                    commit('setErrorMessage', 'Ошибка входа!' + (response.data.error ? ' ' + response.data.error : ''));
+                    commit('setErrorMessage', 'Ошибка входа!' + (response.data.error ? ' ' + response.data.error : ''), { root: true });
                 }
             }
             catch (e) {
-                commit('setErrorMessage', 'Ошибка входа!')
+                commit('setErrorMessage', 'Ошибка входа!', { root: true })
+            }
+        },
+        async registerUser({dispatch, commit}, newUser) {
+            try {
+                let response = await axios.post(`/api/user/register`, newUser);
+                let isSuccess = response && response.data && response.data.user && response.data.user.id;
+                if (isSuccess) {
+                    let user = response.data.user;
+
+                    commit('setCurrentUser', user);
+                    dispatch('saveLoggedInUser', user);
+                    commit('setSuccessMessage', 'Вы зарегистрировались!', { root: true });
+                }
+                else {
+                    commit('setErrorMessage', 'Ошибка регистрации!' + (response.data.error ? ' ' + response.data.error : ''), { root: true });
+                }
+            }
+            catch (e) {
+                commit('setErrorMessage', 'Ошибка регистрации!', { root: true })
             }
         },
         async logoutUser({commit}) {
             localStorage.removeItem('currentUser');
             return commit('setCurrentUser', false);
         },
-        async deleteUser({dispatch, state}, user) {
-            await axios.post(`/api/user/delete`, {user});
-            return dispatch('loadUsers', state.filter);
-        },
     },
     mutations: {
-        setUsers(state, users) {
-            state.list = users;
-        },
-        setEditUser(state, user) {
-            state.edit = user;
-        },
-        setCurrentUser(state, user) {
-            state.current = user;
+        setCurrentUser(state, owner) {
+            state.current = owner;
         },
         setFilter(state, filter) {
             state.currentFilter = filter;

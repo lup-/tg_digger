@@ -16,8 +16,9 @@ export default function (params, extra = {}) {
         namespaced: true,
         state: {
             list: [],
+            totalCount: 0,
             edit: false,
-            currentFilter: false,
+            currentParams: false,
         },
         getters: {
             byId(state) {
@@ -27,13 +28,17 @@ export default function (params, extra = {}) {
             }
         },
         actions: {
-            async loadItems({commit}, filter = {}) {
+            async loadItems({commit, rootState}, inputParams) {
+                let {filter = {}, limit = 15, offset = 0, sort = {}} = {...inputParams};
+
                 if (!API_LIST_URL) {
                     return;
                 }
 
-                let response = await axios.post(API_LIST_URL, {filter});
-                await commit('setFilter', filter);
+                let user = rootState.user.current;
+                let response = await axios.post(API_LIST_URL, {filter, limit, offset, sort, user});
+                await commit('setParams', {filter, limit, offset, sort});
+                await commit('setTotalCount', response.data['totalCount']);
                 return commit('setItems', response.data[NAME_ITEMS]);
             },
             async setEditItem({commit, state}, itemId) {
@@ -42,64 +47,80 @@ export default function (params, extra = {}) {
                     commit('setEditItem', item);
                 }
             },
-            async newItem({dispatch, state}, item) {
+            async newItem({dispatch, state, commit, rootState}, item) {
                 if (!API_ADD_URL) {
                     return;
                 }
 
+                let user = rootState.user.current;
                 let query = {};
                 query[NAME_ITEM] = item;
+                query['user'] = user;
 
-                let result = await axios.post(API_ADD_URL, query);
-                dispatch('setEditItem', result.data[NAME_ITEM]);
-                return dispatch('loadItems', state.filter);
+                let response = await axios.post(API_ADD_URL, query);
+                let isSuccess = response && response.data && response.data[NAME_ITEM] && response.data[NAME_ITEM].id;
+                if (isSuccess) {
+                    commit('setSuccessMessage', 'Данные сохранены!', { root: true });
+                }
+                else {
+                    commit('setErrorMessage', 'Ошибка сохранения данных!', { root: true });
+                }
+
+                return dispatch('loadItems', state.currentParams);
             },
-            async saveItem({dispatch, commit, state}, item) {
+            async saveItem({dispatch, commit, state, rootState}, item) {
                 if (!API_UPDATE_URL) {
                     return;
                 }
 
                 try {
+                    let user = rootState.user.current;
                     let query = {};
                     query[NAME_ITEM] = item;
+                    query['user'] = user;
 
                     let response = await axios.post(API_UPDATE_URL, query);
                     let isSuccess = response && response.data && response.data[NAME_ITEM] && response.data[NAME_ITEM].id;
                     if (isSuccess) {
-                        commit('setSuccessMessage', 'Данные сохранены!');
+                        commit('setSuccessMessage', 'Данные сохранены!', { root: true });
                     }
                     else {
-                        commit('setErrorMessage', 'Ошибка сохранения данных!');
+                        commit('setErrorMessage', 'Ошибка сохранения данных!', { root: true });
                     }
                 }
                 catch (e) {
-                    commit('setErrorMessage', 'Ошибка сохранения данных!')
+                    commit('setErrorMessage', 'Ошибка сохранения данных!', { root: true });
                 }
 
-                return dispatch('loadItems', state.currentFilter);
+                return dispatch('loadItems', state.currentParams);
             },
-            async deleteItem({dispatch, state}, item) {
+            async deleteItem({dispatch, state, rootState}, item) {
                 if (!API_DELETE_URL) {
                     return;
                 }
 
+                let user = rootState.user.current;
                 let query = {};
                 query[NAME_ITEM] = item;
+                query['user'] = user;
 
                 await axios.post(API_DELETE_URL, query);
-                return dispatch('loadItems', state.filter);
+                return dispatch('loadItems', state.currentParams);
             },
         },
         mutations: {
             setItems(state, items) {
                 state.list = items;
             },
-            setFilter(state, filter) {
-                state.currentFilter = filter;
+            setParams(state, params) {
+                state.currentParams = params;
             },
             setEditItem(state, item) {
                 state.edit = item;
             },
+            setTotalCount(state, totalCount) {
+                state.totalCount = totalCount;
+            }
         }
     }, extra);
 }

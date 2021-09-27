@@ -1,20 +1,25 @@
 version: "3"
 
 services:
-  admin:
+  nginx:
     image: nginx
+    restart: ${RESTART}
     ports:
       - ${HTTP_PORT}:80
     volumes:
       - ./frontend/dist:/var/www/public
+      - ./admin/dist:/var/www/admin
       - ./etc/nginx/site.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - backend
 
   backend:
     image: node
+    restart: ${RESTART}
     depends_on:
       - mongo
+      - telegram
+      - redis
     volumes:
       - ./backend:/var/www
     ports:
@@ -24,30 +29,31 @@ services:
       - NODE_ENV=development
       - MONGO_HOST=mongo
       - MONGO_DB=digger
+      - TELEGRAM_GATEWAY_URL=${TELEGRAM_GATEWAY_URL}
+      - REDIS=redis
     command: node --inspect=0.0.0.0 server.js
 
-  digger:
-    build:
-      context: "."
-      dockerfile: "./etc/build/Dockerfile_tdlib"
-    ports:
-      - ${BOT_DEBUG_PORT}:9229
-      - ${BOT_HTTP_PORT}:3000
+  scanner:
+    image: node
+    restart: ${RESTART}
     depends_on:
       - mongo
+      - telegram
     volumes:
-      - ./bot:/var/bot
-    working_dir: /var/bot
+      - ./backend:/var/www
+    ports:
+      - ${SCANNER_DEBUG_PORT}:9229
+    working_dir: /var/www
     environment:
+      - NODE_ENV=development
       - MONGO_HOST=mongo
       - MONGO_DB=digger
-      - API_ID=${API_ID}
-      - API_HASH=${API_HASH}
-      - AUTH_PHONE=${AUTH_PHONE}
-      - TDJSONLIB_PATH=${TDJSONLIB_PATH}
-    command: npm run start
+      - TELEGRAM_GATEWAY_URL=${TELEGRAM_GATEWAY_URL}
+      - REDIS=redis
+    command: node --inspect=0.0.0.0 scanner.js
 
   textractor:
+    restart: ${RESTART}
     build:
       context: "."
       dockerfile: "./etc/build/Dockerfile_textractor"
@@ -63,7 +69,30 @@ services:
 
   mongo:
     image: mongo
+    restart: ${RESTART}
     volumes:
       - ./etc/database:/data/db
     ports:
       - ${MONGO_PORT}:27017
+
+  telegram:
+    restart: ${RESTART}
+    build:
+      context: "."
+      dockerfile: "./etc/build/Dockerfile_telegram"
+    ports:
+      - ${TELEGRAM_GATEWAY_PORT}:3000
+    volumes:
+      - ./telegram:/var/www
+    working_dir: /var/www
+    environment:
+      - API_ID=${TELEGRAM_API_ID}
+      - API_HASH=${TELEGRAM_API_HASH}
+      - PYTHONUNBUFFERED=1
+    command: python bot.py
+
+  redis:
+    image: redis
+    restart: ${RESTART}
+    ports:
+      - ${REDIS_PORT}:6379

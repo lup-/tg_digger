@@ -1,7 +1,6 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -19,10 +18,14 @@
   "homepage": "https://github.com/lup-/jobbo#readme",
   "dependencies": {
     "@koa/router": "^10.0.0",
+    "axios": "^0.21.1",
+    "bee-queue": "^1.4.0",
     "koa": "^2.13.0",
     "koa-bodyparser": "^4.3.0",
-    "shortid": "^2.2.16",
     "moment": "^2.29.1",
-    "mongodb": "^3.6.3"
-  }
+    "mongodb": "^3.6.3",
+    "shortid": "^2.2.16"
+  },
+  "keywords": [],
+  "description": ""
 }
