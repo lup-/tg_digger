@@ -31,17 +31,17 @@ scansQueue.process(async (job) => {
     let dbUsers = await db.collection('scan_users').find({userId: user.id}).toArray();
 
     for (let chat of chats) {
-        let dbMessages = await db.collection('scan_messages').find({chatId: chat.id, userId: user.id}).sort({id: 1}).toArray();
+        let dbMessages = await db.collection('scan_messages').find({chatId: chat.id, userId: user.id}).sort({id: -1}).toArray();
 
         let newestSavedMessage = dbMessages[0] || null;
         let oldestSavedMessage = dbMessages[dbMessages.length-1] || null;
         let needToScanOldMessages = !oldestSavedMessage;
         if (oldestSavedMessage) {
             let oldestMessageDate = moment(oldestSavedMessage.date);
-            needToScanOldMessages = oldestMessageDate.isBefore(scanToDate);
+            needToScanOldMessages = oldestMessageDate.isAfter(scanToDate);
         }
 
-        let fromMessageId = null;
+        let fromMessageId = 0;
 
         let messagesToSave = [];
         let usersToSave = [];
@@ -73,7 +73,7 @@ scansQueue.process(async (job) => {
                         newChatHistoryMessages = newChatHistoryMessages.concat(newLoadedMessages);
                         newChatHistoryUsers = newChatHistoryUsers.concat(history.users)
 
-                        newChatHistoryMessages.sort((a, b) => a.id - b.id);
+                        newChatHistoryMessages.sort((a, b) => b.id - a.id);
 
                         newestSavedMessageNotFound = !messageIdInArray(newestSavedMessage.id, newChatHistoryMessages);
                         let lastLoadedMessage = newChatHistoryMessages[newChatHistoryMessages.length - 1];
@@ -116,7 +116,7 @@ scansQueue.process(async (job) => {
                             oldChatHistoryMessages = oldChatHistoryMessages.concat(history.messages);
                             oldChatHistoryUsers = oldChatHistoryUsers.concat(history.users)
 
-                            oldChatHistoryMessages.sort((a, b) => a.id - b.id);
+                            oldChatHistoryMessages.sort((a, b) => b.id - a.id);
 
                             let lastLoadedMessage = oldChatHistoryMessages[oldChatHistoryMessages.length - 1];
                             let lastMessageDate = moment(lastLoadedMessage.date);
@@ -172,9 +172,10 @@ scansQueue.process(async (job) => {
 
     let chatIds = chats.map(chat => chat.id);
     let messagesToScan = await db.collection('scan_messages').find({chatId: {$in: chatIds}, userId: user.id}).sort({id: -1}).toArray();
+    messagesToScan = messagesToScan.filter(message => moment(message.date).isSameOrAfter(scanToDate));
 
     let scanner = new Scanner(scan);
-    let results = scanner.scanMessages(messagesToScan);
+    let results = await scanner.scanMessages(messagesToScan);
     let resultUserIds = results.map(stats => stats.user.user_id);
     let scanUsers = await db.collection('scan_users').find({id: {$in: resultUserIds}, userId: user.id}).toArray();
 

@@ -1,3 +1,7 @@
+const axios = require("axios");
+
+const TEXTRACTOR_URL = process.env.TEXTRACTOR_URL;
+
 function countKeyword(str, keyword) {
     return str
         .toLocaleLowerCase()
@@ -81,8 +85,8 @@ module.exports = class Scanner {
         this.updateUserStats(user, userStats);
     }
 
-    postProcessedStats() {
-        return this.userStats.map(stat => {
+    countUniquePeers(stats) {
+        return stats.map(stat => {
             let uniquePeers = stat.peers.filter((peerId, index, all) => all.indexOf(peerId) === index);
             stat.peers = uniquePeers.length;
 
@@ -90,7 +94,28 @@ module.exports = class Scanner {
         });
     }
 
-    scanMessages(messages) {
+    async findUserKeywords(stats, messages) {
+        let userIds = stats.map(stat => stat.user.user_id);
+        for (let userId of userIds) {
+            let userMessages = messages.filter(message => message.from_id.user_id === userId);
+            let messageTexts = userMessages.map(message => message.message ? message.message : '');
+
+            let allMessagesAsText = messageTexts.join('\n\n');
+
+            let {data} = await axios.post(TEXTRACTOR_URL + '/keywords', allMessagesAsText, {
+                headers: { 'Content-Type': 'text/plain' }
+            });
+
+            let statIndex = stats.findIndex(stat => stat.user.user_id === userId);
+            if (statIndex !== -1) {
+                stats[statIndex].userKeywords = data.keywords;
+            }
+        }
+
+        return stats;
+    }
+
+    async scanMessages(messages) {
         for (let message of messages) {
             let user = message.from_id;
             let messageStats = this.getMessageStats(message);
@@ -100,6 +125,8 @@ module.exports = class Scanner {
             }
         }
 
-        return this.postProcessedStats();
+        let stats = this.countUniquePeers(this.userStats);
+        stats = await this.findUserKeywords(stats, messages);
+        return stats;
     }
 }

@@ -49,6 +49,7 @@ services:
       - MONGO_HOST=mongo
       - MONGO_DB=digger
       - TELEGRAM_GATEWAY_URL=${TELEGRAM_GATEWAY_URL}
+      - TEXTRACTOR_URL=${TEXTRACTOR_URL}
       - REDIS=redis
     command: node --inspect=0.0.0.0 scanner.js
 

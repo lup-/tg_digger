@@ -213,7 +213,7 @@ async def new_client(request):
 @app.route('/getHistory', methods=['POST'])
 async def get_history(request):
     peer = request.json['peer']
-    offset_id = request.json['from_message_id'] if hasattr(request.json, 'from_message_id') else 0
+    offset_id = request.json['from_message_id'] if 'from_message_id' in request.json else 0
 
     result = await request.ctx.tg_client(functions.messages.GetHistoryRequest(
         peer=peer,
@@ -222,7 +222,7 @@ async def get_history(request):
         add_offset=0,  # Additional message offset (all of the specified offsets + this offset = older messages).
         limit=100,  # Number of messages to be retrieved.
         max_id=0,  # All the messages with a higher (newer) ID or equal to this will be excluded.
-        min_id=offset_id,  # All the messages with a lower (older) ID or equal to this will be excluded.
+        min_id=0,  # All the messages with a lower (older) ID or equal to this will be excluded.
         hash=0
     ))
     return json({"history": ttjson(result)})

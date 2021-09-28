@@ -5,7 +5,7 @@
         <v-card>
             <v-card-title>Подключение к Telegram</v-card-title>
 
-            <v-card-text v-if="isNotConnected">
+            <v-card-text v-if="step === 0">
                 <form :autocomplete="getRandomId()" class="mb-2">
                     <v-text-field
                         v-model="phone"
@@ -32,8 +32,8 @@
                     ></v-text-field>
                 </form>
             </v-card-text>
-            <v-card-text v-else-if="waitingForCode">
-                <v-text-field v-if="!phone"
+            <v-card-text v-else-if="step === 1">
+                <v-text-field v-if="enterPhone"
                     v-model="phone"
                     label="Телефон для входа в Telegram"
                     hint="В формате +7 999 123-45-67"
@@ -47,7 +47,7 @@
                     outlined
                 ></v-text-field>
             </v-card-text>
-            <v-card-text v-else-if="isReady">
+            <v-card-text v-else-if="step === 2">
                 <p>Telegram успешно подключен!</p>
             </v-card-text>
             <v-card-text v-else>
@@ -55,12 +55,14 @@
             </v-card-text>
             <v-divider></v-divider>
             <v-card-actions>
+                <v-btn icon @click="step = step-1" v-if="step === 1"><v-icon>mdi-arrow-left</v-icon></v-btn>
                 <v-spacer></v-spacer>
-                <v-btn color="primary" large @click="sendLogin" v-if="isNotConnected">Войти</v-btn>
-                <v-btn color="primary" large @click="sendCode" v-else-if="waitingForCode">Отправить код</v-btn>
-                <v-btn color="primary" large @click="logout" v-else-if="isReady">Отключить</v-btn>
+                <v-btn color="primary" large @click="sendLogin" v-if="step === 0" :loading="loading">Войти</v-btn>
+                <v-btn color="primary" large @click="sendCode" v-else-if="step === 1" :loading="loading">Отправить код</v-btn>
+                <v-btn color="primary" large @click="logout" v-else-if="step === 2" :loading="loading">Отключить</v-btn>
             </v-card-actions>
         </v-card>
+        <v-alert v-if="lastError" type="error" class="mt-4">{{lastError}}</v-alert>
     </form>
 </template>
 
@@ -72,11 +74,23 @@ export default {
             showDialog: this.value,
             showPassword: false,
             phone: '',
+            enterPhone: true,
             password: '',
-            code: ''
+            code: '',
+            step: 0,
+            loading: false,
         }
     },
     watch: {
+        isNotConnected() {
+            this.checkState();
+        },
+        waitingForCode() {
+            this.checkState();
+        },
+        isReady() {
+            this.checkState();
+        },
         value() {
             if (this.showDialog !== this.value) {
                 this.showDialog = this.value;
@@ -91,7 +105,11 @@ export default {
     created() {
         if (this.user && this.user.telegram && this.user.telegram.authPhone) {
             this.phone = this.user.telegram.authPhone;
+            this.enterPhone = false;
         }
+    },
+    mounted() {
+        this.checkState();
     },
     methods: {
         getRandomId() {
@@ -103,19 +121,38 @@ export default {
             this.showDialog = false;
         },
         async sendLogin() {
-            return this.$store.dispatch('telegram/newClient', {
+            this.loading = true;
+            await this.$store.dispatch('telegram/newClient', {
                 phone: this.phone,
                 password: this.password,
             });
+            this.loading = false;
+            this.enterPhone = false;
         },
         async sendCode() {
-            return this.$store.dispatch('telegram/sendCode', {
+            this.loading = true;
+            await this.$store.dispatch('telegram/sendCode', {
                 phone: this.phone,
                 code: this.code,
             });
+            this.loading = false;
         },
         async logout() {
+            this.step = 0;
             return this.$store.dispatch('telegram/logout');
+        },
+        checkState() {
+            if (this.isNotConnected === true) {
+                this.step = 0;
+            }
+
+            if (this.waitingForCode === true) {
+                this.step = 1;
+            }
+
+            if (this.isReady === true) {
+                this.step = 2;
+            }
         }
     },
     computed: {
@@ -130,6 +167,9 @@ export default {
         },
         isReady() {
             return this.$store.state.telegram.ready;
+        },
+        lastError() {
+            return this.$store.state.telegram.lastError;
         }
     }
 }

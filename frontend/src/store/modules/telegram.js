@@ -7,6 +7,7 @@ export default {
         waiting: false,
         ready: false,
         me: false,
+        lastError: false,
     },
     getters: {
         isReady(state) {
@@ -106,6 +107,7 @@ export default {
                 }
 
                 if (data.ready) {
+                    commit('setLastError', false);
                     commit('setSuccessMessage', 'Telegram успешно подключен!', { root: true });
                 }
             }
@@ -114,7 +116,9 @@ export default {
             }
 
             if (error) {
-                commit('setErrorMessage', 'Ошибка подключения! ' + error, { root: true });
+                let errorText = 'Ошибка подключения! ' + error;
+                commit('setLastError', errorText);
+                commit('setErrorMessage', errorText, { root: true });
             }
         },
         async sendCode({commit, rootState}, {phone, code}) {
@@ -137,6 +141,7 @@ export default {
                 });
 
                 if (data.ready) {
+                    commit('setLastError', false);
                     commit('setSuccessMessage', 'Telegram успешно подключен!', { root: true });
                 }
             }
@@ -148,7 +153,9 @@ export default {
                 if (error !== 'Неверно указан код') {
                     await commit('setStatus', {started: false, waiting: false});
                 }
-                commit('setErrorMessage', 'Ошибка отправки кода! ' + error, { root: true });
+                let errorText = 'Ошибка отправки кода! ' + error
+                commit('setLastError', errorText);
+                commit('setErrorMessage', errorText, { root: true });
             }
         },
         async loadMe({state, commit, rootState}) {
@@ -190,7 +197,9 @@ export default {
             }
 
             if (error) {
-                commit('setErrorMessage', 'Ошибка выхода! ' + error, { root: true });
+                let errorText = 'Ошибка выхода! ' + error
+                commit('setLastError', errorText);
+                commit('setErrorMessage', errorText, { root: true });
             }
         },
         async sendMessage({commit, rootState}, {messageTo, messageText, scheduleTimestamp = false, messageToName = false}) {
@@ -200,6 +209,7 @@ export default {
             try {
                 let {data} = await axios.post('/api/telegram/sendMessage', {user, messageTo, messageText, scheduleTimestamp, messageToName});
                 if (data.message) {
+                    commit('setLastError', false);
                     commit('setSuccessMessage', 'Сообщение отправлено!', { root: true });
                 }
 
@@ -212,7 +222,9 @@ export default {
             }
 
             if (error) {
-                commit('setErrorMessage', 'Ошибка отправки сообщения! ' + error, { root: true });
+                let errorText = 'Ошибка отправки сообщения! ' + error
+                commit('setLastError', errorText);
+                commit('setErrorMessage', errorText, { root: true });
             }
         }
     },
@@ -234,6 +246,9 @@ export default {
         },
         setMe(state, newMe) {
             state.me = newMe;
+        },
+        setLastError(state, lastError) {
+            state.lastError = lastError;
         }
     }
 }

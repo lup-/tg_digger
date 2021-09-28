@@ -6,7 +6,19 @@
             </v-btn>
 
             <v-col cols="12">
-                <v-data-table
+                <v-card v-if="items.length === 0 && !loading"
+                    class="mt-8"
+                >
+                    <v-card-title><v-icon class="mr-2" color="black">mdi-magnify-scan</v-icon> Создайте первое сканирование</v-card-title>
+                    <v-card-text>
+                        <p>Чтобы понять кто есть кто в чате, нужно создать сканирование.</p>
+                        <p>Сканирование загрузит все сообщения выбранных чатов и соберет по ним интересные данные.</p>
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-btn large color="primary" @click="newItem">Создать сканирование</v-btn>
+                    </v-card-actions>
+                </v-card>
+                <v-data-table v-else
                     dense
                     :headers="headers"
                     :items="items"
@@ -22,7 +34,7 @@
                         {{getDate(item.created)}}
                     </template>
                     <template v-slot:item.chats="{item}">
-                        {{item.chats.map(chat => chat.title).join(', ')}}
+                        {{item.chats ? item.chats.map(chat => chat.title).join(', ') : ''}}
                     </template>
                     <template v-slot:item.actions="{ item }">
                         <v-btn icon small @click="editItem(item)"><v-icon>mdi-pencil</v-icon></v-btn>

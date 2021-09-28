@@ -46,6 +46,16 @@
                                             <v-list-item-content class="align-end">{{item.keywords ? item.keywords[keyword] || 0 : 0}}</v-list-item-content>
                                         </v-list-item>
                                     </v-list>
+
+                                    <v-divider v-if="item.userKeywords"></v-divider>
+                                    <v-card-text v-if="item.userKeywords">
+                                        <v-chip v-for="keywordData in item.userKeywords.tfidf" :key="keywordData.keyword"
+                                            class="mb-1 mr-1"
+                                            x-small
+                                        >
+                                            {{keywordData.keyword}}
+                                        </v-chip>
+                                    </v-card-text>
                                 </v-card>
                             </v-col>
                         </v-row>

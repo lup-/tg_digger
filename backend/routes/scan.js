@@ -24,12 +24,26 @@ module.exports = {
         let sort = ctx.request.body && ctx.request.body.sort
             ? ctx.request.body.sort || {}
             : {};
+        let user = ctx.request.body && ctx.request.body.user
+            ? ctx.request.body.user || {}
+            : {};
+
+        if (!user) {
+            let response = {
+                scans: [],
+                totalCount: 0,
+            };
+
+            ctx.body = response;
+            return;
+        }
 
         let limit = ctx.request.body.limit ? parseInt(ctx.request.body.limit) : null;
         let offset = ctx.request.body.offset ? parseInt(ctx.request.body.offset) : 0;
 
         let defaultFilter = {
-            'deleted': {$in: [null, false]}
+            'deleted': {$in: [null, false]},
+            'user.id': user.id,
         };
 
         let filter = Object.assign(defaultFilter, {});
