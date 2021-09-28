@@ -28,7 +28,7 @@ export default {
     },
     actions: {
         async loadUsers({commit}, filter = {}) {
-            let response = await axios.post(`/api/user/list`, {filter});
+            let response = await axios.post(`/api/admin/user/list`, {filter});
             await commit('setFilter', filter);
             return commit('setUsers', response.data.users);
         },
@@ -39,13 +39,13 @@ export default {
             }
         },
         async newUser({dispatch, state}, user) {
-            let result = await axios.post(`/api/user/add`, {user});
+            let result = await axios.post(`/api/admin/user/add`, {user});
             dispatch('setEditUser', result.data.user);
             return dispatch('loadUsers', state.filter);
         },
         async editUser({dispatch, commit, state}, user) {
             try {
-                let response = await axios.post(`/api/user/update`, {user});
+                let response = await axios.post(`/api/admin/user/update`, {user});
                 let isSuccess = response && response.data && response.data.user && response.data.user.id;
                 if (isSuccess) {
                     commit('setSuccessMessage', 'Данные сохранены!');
@@ -79,7 +79,7 @@ export default {
                 return;
             }
 
-            let response = await axios.post(`/api/user/check`, {id: user.id});
+            let response = await axios.post(`/api/admin/user/check`, {id: user.id});
             let isSuccess = response && response.data && response.data.success === true;
             if (isSuccess) {
                 return commit('setCurrentUser', user);
@@ -91,7 +91,7 @@ export default {
         },
         async loginUser({dispatch, commit}, {login, password}) {
             try {
-                let response = await axios.post(`/api/user/login`, {login, password});
+                let response = await axios.post(`/api/admin/user/login`, {login, password});
                 let isSuccess = response && response.data && response.data.user && response.data.user.id;
                 let user = isSuccess ? response.data.user : false;
                 if (isSuccess) {
@@ -112,7 +112,7 @@ export default {
             return commit('setCurrentUser', false);
         },
         async deleteUser({dispatch, state}, user) {
-            await axios.post(`/api/user/delete`, {user});
+            await axios.post(`/api/admin/user/delete`, {user});
             return dispatch('loadUsers', state.filter);
         },
     },
