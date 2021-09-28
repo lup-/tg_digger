@@ -68,7 +68,7 @@ services:
     command: python server.py
 
   mongo:
-    image: mongo
+    image: mongo:4.2
     restart: ${RESTART}
     volumes:
       - ./etc/database:/data/db
